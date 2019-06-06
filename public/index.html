@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <style>
+      .content {
+        margin: 25px auto;
+        max-width: 980px;
+      }
+
+      .myId {
+        margin-bottom: 25px;
+      }
+
+      #output {
+        margin-top: 25px;
+        border: 1px solid black;
+        padding: 15px;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="content">
+      <div class="myId">
+        <label for="myId">My Id:</label>
+        <br />
+        <input type="text" name="myId" id="myId" />
+
+        <div>
+          <button id="setId">Set My Id</button>
+        </div>
+      </div>
+
+      <div>
+        <label for="userId">User's Id:</label>
+        <br />
+        <input type="text" name="userId" id="userId" />
+      </div>
+
+      <div>
+        <label for="message">Message:</label>
+        <br />
+        <input type="text" name="message" id="message" />
+      </div>
+
+      <div>
+        <button id="submit">Send Message</button>
+      </div>
+
+      <div id="output"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      // setup socket and socket identification
+      let socket;
+      const myIdEl = document.getElementById('myId');
+      const setIdEl = document.getElementById('setId');
+
+      setIdEl.addEventListener('click', (e) => {
+        socket = io();
+        socket.emit('identification', { id: myIdEl.value });
+        socket.on('verified', (msg) => {
+          console.log('Verified:', msg);
+
+          myIdEl.disabled = true;
+          setIdEl.classList.add('hidden');
+
+          handleSocketMessages(socket);
+        });
+      });
+
+      // handle sending chat messages
+      const userIdEl = document.getElementById('userId');
+      const messageEl = document.getElementById('message');
+      const submitEl = document.getElementById('submit');
+      const outputEl = document.getElementById('output');
+
+      submitEl.addEventListener('click', (e) => {
+        const userId = userIdEl.value;
+        const content = messageEl.value;
+        const payload = { to: userId, from: myIdEl.value, content };
+        socket.emit('chat', payload);
+
+        const message = document.createElement('div');
+        message.innerHTML = `${myIdEl.value} said: ${content}`;
+        outputEl.appendChild(message);
+      });
+
+      // handle receiving chat messages
+      function handleSocketMessages(socket) {
+        socket.on('chat', (msg) => {
+          const message = document.createElement('div');
+          message.innerHTML = `${msg.from} said: ${msg.content}`;
+          outputEl.appendChild(message);
+        });
+      }
+    </script>
+  </body>
+</html>
