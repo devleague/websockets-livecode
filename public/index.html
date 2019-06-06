@@ -15,6 +15,10 @@
         margin-bottom: 25px;
       }
 
+      .users {
+        margin-top: 25px;
+      }
+
       #output {
         margin-top: 25px;
         border: 1px solid black;
@@ -55,6 +59,11 @@
         <button id="submit">Send Message</button>
       </div>
 
+      <div class="users">
+        Users Online:
+        <div id="users"></div>
+      </div>
+
       <div id="output"></div>
     </div>
 
@@ -62,6 +71,7 @@
     <script type="text/javascript">
       // setup socket and socket identification
       let socket;
+      let users = [];
       const myIdEl = document.getElementById('myId');
       const setIdEl = document.getElementById('setId');
 
@@ -69,12 +79,11 @@
         socket = io();
         socket.emit('identification', { id: myIdEl.value });
         socket.on('verified', (msg) => {
-          console.log('Verified:', msg);
-
           myIdEl.disabled = true;
           setIdEl.classList.add('hidden');
 
           handleSocketMessages(socket);
+          getUsers();
         });
       });
 
@@ -101,6 +110,44 @@
           const message = document.createElement('div');
           message.innerHTML = `${msg.from} said: ${msg.content}`;
           outputEl.appendChild(message);
+        });
+      }
+
+      function getUsers() {
+        socket.on('users', (onlineUsers) => {
+          users = onlineUsers;
+          printUsers(users);
+        });
+
+        socket.on('online', (user) => {
+          users.push(user);
+          printUsers(users);
+        });
+
+        socket.on('offline', (user) => {
+          if (!user) {
+            return;
+          }
+
+          users = users.filter((thisUser) => {
+            return thisUser !== user;
+          });
+
+          printUsers(users);
+        });
+
+        socket.emit('users');
+      }
+
+      function printUsers(users) {
+        const usersEl = document.getElementById('users');
+
+        usersEl.innerHTML = '';
+
+        users.forEach((user) => {
+          const userEl = document.createElement('div');
+          userEl.innerText = user;
+          usersEl.appendChild(userEl);
         });
       }
     </script>

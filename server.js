@@ -26,6 +26,7 @@ io.on('connection', (socket) => {
 
     // send back identification verification
     socket.emit('verified', true);
+    io.emit('online', msg.id);
   });
 
   // disconnect event
@@ -34,6 +35,7 @@ io.on('connection', (socket) => {
 
     if (user && user.id) {
       delete onlineUsers[user.id];
+      io.emit('offline', user.id);
     }
 
     console.log('a user disconnected');
@@ -50,6 +52,11 @@ io.on('connection', (socket) => {
     if (intendedUser) {
       intendedUser.emit('chat', msg);
     }
+  });
+
+  // list of users
+  socket.on('users', () => {
+    socket.emit('users', Object.keys(onlineUsers));
   });
 });
 
